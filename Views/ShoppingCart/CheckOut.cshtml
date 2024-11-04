@@ -1,0 +1,477 @@
+﻿@model IEnumerable<ClothesShop.Models.EF.CartDetail>
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewBag.Title = "CheckOut";
+}
+<style>
+    a, button, input {
+        outline: medium none;
+        color: #000000;
+    }
+
+    .shopee-popup {
+        bottom: 0;
+        left: 0;
+        position: fixed;
+        right: 0;
+        top: 0;
+        z-index: 1000;
+        display: none; /* Thêm này để ẩn modal khi không sử dụng */
+    }
+
+    .shopee-popup__overlay {
+        background-color: rgba(0, 0, 0, 0.5);
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+
+
+    .shopee-popup__container {
+        left: 50%;
+        max-height: 500px;
+        /*overflow-y: auto;*/
+        max-width: 90%; /* Giới hạn chiều rộng của modal */
+        /*overflow: visible;*/
+        overflow-y: auto;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .shopee-alert-popup {
+        background-color: #fff;
+        padding: 20px; /* Thêm padding cho đẹp */
+        border-radius: 8px; /* Bo góc */
+        height: 500px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5); /* Thêm bóng đổ */
+    }
+
+    .shopee-alert-popup__message {
+        font-size: 1rem;
+        margin-top: 2.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+   
+
+    .shopee-alert-popup__button-horizontal-layout {
+        display: flex;
+        margin-top: 1.0rem;
+    }
+
+        .shopee-alert-popup__button-horizontal-layout .shopee-button-outline, .shopee-alert-popup__button-horizontal-layout .shopee-button-solid {
+            flex: 1;
+            padding: 0.75rem 0;
+            text-transform: capitalize;
+        }
+
+    .shopee-button-solid--primary {
+        outline: 0px;
+        overflow: visible;
+        position: relative;
+    }
+
+    .shopee-button-solid {
+        align-items: center;
+        background: rgba(0, 0, 0, 0.54);
+        border: 0px;
+        border-radius: 2px;
+        box-shadow: rgba(0, 0, 0, 0.09) 0px 1px 1px 0px;
+        color: rgb(255, 255, 255);
+        cursor: pointer;
+        display: flex;
+        font-size: 0.875rem;
+        font-weight: 300;
+        justify-content: center;
+        letter-spacing: 0px;
+        line-height: 1;
+        outline: none;
+        position: relative;
+        transition: opacity 0.2s ease 0s;
+        user-select: none;
+    }
+    /* Ẩn thanh trượt */
+    .shopee-alert-popup__message::-webkit-scrollbar {
+        display: none; /* Ẩn thanh trượt cho WebKit browsers */
+    }
+
+    .shopee-alert-popup__message {
+        -ms-overflow-style: none; /* IE and Edge */
+        scrollbar-width: none; /* Firefox */
+    }
+</style>
+@if (!string.IsNullOrEmpty(ViewBag.Message))
+{
+    <div class="alert alert-warning" role="alert">
+        @ViewBag.Message
+    </div>
+}
+
+@if (Model != null && Model.Any())
+{
+    <div class="m-3">
+        <div class="row d-flex justify-content-around" id="inf">
+            <h5 class="col-4">Địa chỉ nhận hàng</h5>
+            @if (ViewBag.Addresses != null && ViewBag.Addresses.Count > 0)
+            {
+                foreach (var ad in ViewBag.Addresses)
+                {
+                    if (ad.IsDefault)
+                    {
+                        <div class="col-4" id="defaultAddress"><strong>@ad.ReceiverName - (@ad.ReceiverPhone) - @ad.ReceiverAddress</strong></div>
+                        break;
+                    }
+
+                }
+            }
+            @*<a href="H8KLCAAAAAAAAAN9VsOJcsOjOAzDvRfCnX3CkMK8RMKOf2XCqsKLRcKTwpDDjQ4pwqrCuTjDtnTDpcOfB8OgIsOJw67DtMOkEhEAwrE9w6DDkcK">aaaaaaaaaaaa</a>*@
+            <button class="col-2 btnChangeAddress btn btn-link">Thay đổi</button>
+            
+        </div>
+        <div>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Tên sản phẩm</th>
+                        <th>Tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var totalMoney = 0;}
+                    @foreach (var item in Model)
+                    {
+                        var money = item.Quantity * item.VariantSize.ProductVariant.Product.PriceSale;
+                        totalMoney += money;
+                        <tr>
+                            <td>@item.VariantSize.ProductVariant.Product.Title X @item.Quantity</td>
+                            <td>@money</td>
+                        </tr>
+                    }
+                    <tr>
+                        <td>Tổng cộng</td>
+                        <td>@totalMoney</td>
+                    </tr>
+                </tbody>
+
+            </table>
+            <div class="row m-3 ">
+                <div class="offset-md-5 col-md-2">
+                    <input type="submit" value="Đặt hàng" class="btn btn-outline-dark" id="btnOrder" />
+                </div>
+            </div>
+        </div>
+
+        <div id="modalChangeAddress" class="shopee-popup">
+            <div class="shopee-popup__overlay"></div>
+            <div class="shopee-popup__container">
+                <div class="shopee-alert-popup">
+                    <h5> Địa chỉ của tôi</h5>
+                    <div class="shopee-alert-popup__message">
+
+                        <ul id="addressList">
+                            @if (ViewBag.Addresses != null && ViewBag.Addresses.Count > 0)
+                            {
+                                foreach (var ad in ViewBag.Addresses)
+                                {
+                                    <li class="row">
+                                        @if (ad.IsDefault)
+                                        {
+                                            <input type="radio" id="selectedAddress_@ad.Id" name="address" value="@ad.Id" style="transform: scale(0.5);" class="col-2" checked>
+                                        }
+                                        else
+                                        {
+                                            <input type="radio" id="selectedAddress_@ad.Id" name="address" value="@ad.Id" style="transform: scale(0.5);" class="col-2">
+                                        }
+
+                                        <div class="col-8"><strong>@ad.ReceiverName - (@ad.ReceiverPhone) - @ad.ReceiverAddress </strong></div>
+                                    </li>
+
+                                }
+                            }
+                        </ul>
+
+                    </div>
+                    <a class="col-2" id="btnAddAddress">Thêm địa chỉ</a>
+                    <div class="shopee-alert-popup__button-horizontal-layout row d-flex justify-content-around">
+                        <div class="offset-md-1 col-md-5">
+                            <input type="submit" value="Hủy" class="btn btn-outline-dark" id="btnCancelChangeAddress" />
+                        </div>
+                        <div class="offset-md-1 col-md-5">
+                            <input type="submit" value="OK" class="btn btn-outline-dark" style="background-color: black; color: white" id="OKChangeAddress" />
+                        </div>
+                        @*<button class="shopee-button-solid shopee-button-solid--primary " id="btnCancelChangeAddress">Hủy</button>
+        <button class="shopee-button-solid shopee-button-solid--primary " style="background-color: red;" id="OKChangeAddress">OK</button>*@
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="modalAddAddress" class="shopee-popup" style="min-height: 0px;">
+            <div class="shopee-popup__overlay"></div>
+            <div class="shopee-popup__container modal-dialog-scrollable">
+                <div class="shopee-alert-popup card">
+                    <h5> Địa chỉ mới</h5>
+                    <div class="shopee-alert-popup__message">
+
+                        <div class="billing-details m-3">
+                            <div class="contact-text right-side">
+                                <form action="#">
+                                    <div class="row">
+                                        <div class="col-lg-6 col-md-6">
+                                            <div class="input-box mb-20">
+                                                <label>Họ<em>*</em></label>
+                                                <input type="text" name="namm" id="fname" class="info">
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-6 col-md-6">
+                                            <div class="input-box mb-20">
+                                                <label>Tên<em>*</em></label>
+                                                <input type="text" name="namm" id="lname" class="info" />
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6">
+                                            <div class="input-box mb-20">
+                                                <label>Email<em>*</em></label>
+                                                <input type="email"
+                                                       name="email"
+                                                       id="email"
+                                                       class="info">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="input-box mb-20">
+                                                <label>Số điện thoại<em>*</em></label>
+                                                <input type="text"
+                                                       name="phone"
+                                                       id="phone"
+                                                       class="info">
+                                            </div>
+                                        </div>
+                                        <div class="col-lg-12">
+                                            <div class="input-box mb-20">
+                                                <label>Địa chỉ<em>*</em></label>
+                                                <div class="css_select_div row d-flex justify-content-around">
+                                                    <select class="css_select col-3" id="tinh" name="tinh" title="Chọn Tỉnh Thành">
+                                                        <option value="0">Tỉnh Thành</option>
+                                                    </select>
+                                                    <select class="css_select col-3" id="quan" name="quan" title="Chọn Quận Huyện">
+                                                        <option value="0">Quận Huyện</option>
+                                                    </select>
+                                                    <select class="css_select col-3" id="phuong" name="phuong" title="Chọn Phường Xã">
+                                                        <option value="0">Phường Xã</option>
+                                                    </select>
+                                                </div>
+                                                <input type="text"
+                                                       name="add2"
+                                                       class="info mt-3"
+                                                       id="addDetail"
+                                                       placeholder="Nhập thêm thông tin về địa chỉ (số nhà...)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="shopee-alert-popup__button-horizontal-layout">
+                        <div class="offset-md-1 col-md-5">
+                            <input type="submit" value="Hủy" class="btn btn-outline-dark" id="btnCancelAddAddress" />
+                        </div>
+                        <div class="offset-md-1 col-md-5">
+                            <input type="submit" value="OK" class="btn btn-outline-dark" style="background-color: black; color: white" id="OKAddAddress" />
+                        </div>
+                        @*<button class="shopee-button-solid shopee-button-solid--primary " id="btnCancelAddAddress">Hủy</button>
+                        <button class="shopee-button-solid shopee-button-solid--primary" style="background-color: red;" id="OKAddAddress">OK</button>*@
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+}
+
+
+<script>
+    $(document).ready(function () {
+
+        $.getJSON('https://esgoo.net/api-tinhthanh/1/0.htm', function (data_tinh) {
+            if (data_tinh.error == 0) {
+                $.each(data_tinh.data, function (key_tinh, val_tinh) {
+                    $("#tinh").append('<option value="' + val_tinh.id + '">' + val_tinh.full_name + '</option>');
+                });
+                $("#tinh").change(function (e) {
+                    var idtinh = $(this).val();
+                    //Lấy quận huyện
+                    $.getJSON('https://esgoo.net/api-tinhthanh/2/' + idtinh + '.htm', function (data_quan) {
+                        if (data_quan.error == 0) {
+                            $("#quan").html('<option value="0">Quận Huyện</option>');
+                            $("#phuong").html('<option value="0">Phường Xã</option>');
+                            $.each(data_quan.data, function (key_quan, val_quan) {
+                                $("#quan").append('<option value="' + val_quan.id + '">' + val_quan.full_name + '</option>');
+                            });
+                            //Lấy phường xã
+                            $("#quan").change(function (e) {
+                                var idquan = $(this).val();
+                                $.getJSON('https://esgoo.net/api-tinhthanh/3/' + idquan + '.htm', function (data_phuong) {
+                                    if (data_phuong.error == 0) {
+                                        $("#phuong").html('<option value="0">Phường Xã</option>');
+                                        $.each(data_phuong.data, function (key_phuong, val_phuong) {
+                                            $("#phuong").append('<option value="' + val_phuong.id + '">' + val_phuong.full_name + '</option>');
+                                        });
+                                    }
+                                });
+                            });
+
+                        }
+                    });
+                });
+
+            }
+        });
+
+        function checkInputs() {
+            var isValid = true;
+            $('.info').each(function () {
+                if ($(this).val() === '' || $(this).val() === '0') {
+                    isValid = false;
+                }
+            });
+            $('.css_select').each(function () {
+                if ($(this).val() === '0') {
+                    isValid = false;
+                }
+            });
+
+            return isValid;
+        }
+        //$('.info, .css_select').on('change input', function () {
+        //    if (checkInputs()) {
+        //        $('#OKAddAddress').prop('disabled', false);
+        //    } else {
+        //        $('#OKAddAddress').prop('disabled', true);
+        //    }
+        //});
+
+        //$('#OKAddAddress').prop('disabled', true);
+
+
+        $('.btnChangeAddress').click(function () {
+            $('#modalChangeAddress').show();
+        });
+
+
+
+        $('#btnCancelChangeAddress').click(function () {
+            $('#modalChangeAddress').hide();
+        });
+        $('#OKChangeAddress').click(function () {
+            
+            var selectedId = $('input[type="radio"][name="address"]:checked').val();
+            if (selectedId) {
+                $.ajax({
+                    url: '/ShoppingCart/ChangeDefaultAddress',
+                    type: 'POST',
+                    data: { id: selectedId },
+                    success: function (rs) {
+                        if (rs.Success) {
+                            $('#modalChangeAddress').hide();
+                            var defaultAddress = '<strong>' + rs.ReceiverName + ' - ' + '(' + rs.ReceiverPhone + ')' + ' - ' + rs.ReceiverAddress + '</strong>';
+                            $('#defaultAddress').html(defaultAddress);
+                        }
+
+                    },
+                    error: function (error) {
+                        console.log('Có lỗi xảy ra:', error);
+
+                    }
+                });
+            }
+            else {
+                alert('Vui lòng chọn địa chỉ trước khi nhấn xác nhận!');
+            }
+        });
+
+        $('#btnAddAddress').click(function (e) {
+
+            e.preventDefault();
+            $('#modalAddAddress').show();
+        });
+        $('#btnCancelAddAddress').click(function () {
+            $('#modalAddAddress').hide();
+        });
+        $('#OKAddAddress').click(function (e) {
+            console.log("okadaddress");
+            e.preventDefault();
+            //if ($(this).is(':disabled')) {
+            //    alert("Vui lòng nhập đầy đủ các thông tin");
+            //}
+            var fname = $('#fname').val().trim();
+            var lname = $('#lname').val().trim();
+            var email = $('#email').val().trim();
+            var phone = $('#phone').val().trim();
+            var tinh = $('#tinh option:selected').text();
+            var quan = $('#quan option:selected').text();
+            var phuong = $('#phuong option:selected').text();
+            var addDetail = $('#addDetail').val().trim();
+
+            var fullAddress = `${tinh}, ${quan}, ${phuong}, ${addDetail}`;
+            if (!fname || !lname || !email || !phone || tinh === "Tỉnh Thành" || quan === "Quận Huyện" || phuong === "Phường Xã" || !addDetail) {
+                alert("Vui lòng nhập đầy đủ các thông tin ");
+                return;
+            }
+            var data = {
+                name: fname + " " + lname,
+                phone: phone,
+                address: fullAddress
+            };
+            console.log(data);
+            $.ajax({
+                url: 'AddAddress',
+                type: 'POST',
+                data: data,
+                success: function (rs) {
+                    var liAddress = '<li class="row">';
+                    if (rs.IsDefault) liAddress += '<input type="radio" id="selectedAddress_' + rs.Id + '" name="address" value="' + rs.Id + '" style="transform: scale(0.5);" class="col-2" checked>';
+                    else liAddress += '<input type="radio" id="selectedAddress_' + rs.Id + '" name="address" value="' + rs.Id + '" style="transform: scale(0.5);" class="col-2">';
+
+                    liAddress += '<div class="col-8"><strong>' + rs.ReceiverName + ' - (' + rs.ReceiverPhone + ') - ' + rs.ReceiverAddress + ' </strong></div>';
+                    liAddress += '</li>';
+
+                    $('#addressList').append(liAddress);
+                    $('#modalAddAddress').hide();
+                },
+                error: function () {
+                    alert('Có lỗi xảy ra, không thể thêm địa chỉ.');
+                }
+            });
+        });
+        $('#btnOrder').click(function (e) {
+            e.preventDefault();
+            var content = $('#defaultAddress').text();
+            var parts = content.split(' - ');
+            var receiverName = parts[0].trim();
+            var receiverPhone = parts[1].replace('(', '').replace(')', '').trim();
+            var receiverAddress = parts[2].trim();
+            $.ajax({
+                url: '/ShoppingCart/OrderProcess',
+                type: 'POST',
+                data: { receiverName: receiverName, receiverPhone: receiverPhone, receiverAddress: receiverAddress  },
+                success: function (rs) {
+                    alert(rs.tb);
+                    window.location.href = 'Index';
+
+                },
+                error: function (error) {
+                    console.log('Có lỗi xảy ra:', error);
+                    console.log(error.responseText);
+
+                }
+            });
+        })
+    });
+</script>
+

@@ -1,0 +1,280 @@
+﻿@model ClothesShop.Models.ViewModel.CategoryPageViewModel
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+
+    .size-checkbox {
+        position: relative;
+        cursor: pointer;
+        display: block;
+    }
+
+        .size-checkbox input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+    .size-mark {
+        display: block;
+        background-color: #fff;
+        border: 2px solid #ccc;
+        padding: 5px 10px;
+        text-align: center;
+    }
+
+    .size-checkbox:hover .size-mark {
+        border-color: #888;
+    }
+
+    .size-checkbox input:checked + .size-mark {
+        border-color: #333; /* Đậm hơn khi được chọn */
+    }
+
+    .custom-checkbox {
+        position: relative;
+        padding-left: 10px;
+        cursor: pointer;
+        display: block;
+    }
+
+        .custom-checkbox input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+    .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 25px;
+        width: 25px;
+        background-color: #eee;
+        border-radius: 50%;
+        border: 1px solid #ddd;
+        transition: border-width 0.2s ease;
+    }
+
+    .custom-checkbox:hover input ~ .checkmark {
+        border-width: 2px;
+    }
+
+    .custom-checkbox input:checked ~ .checkmark {
+        border-width: 3px; /* Khi được tích vào, viền sẽ to và tô đậm hơn */
+        border-color: black; /* Màu của viền khi được tích vào */
+    }
+</style>
+
+<div class="shop-main-area grid-view_area ptb-70">
+    <div class="container">
+        <div class="row">
+            <!--main-shop-product start-->
+            <div class="col-lg-9 col-md-8 order-lg-2 order-md-2 order-1">
+                <div class="shop-wraper">
+                    <div class="col-lg-12">
+                        <div class="shop-area-top">
+                            <div class="row">
+                                <div class="col-xl-6 col-lg-9 col-md-9">
+                                    <div class="sort product-show">
+                                        <label>View</label>
+                                        <select id="input-amount">
+                                            <option value="volvo">10</option>
+                                            <option value="saab">15</option>
+                                            <option value="vw">20</option>
+                                            <option value="audi" selected>25</option>
+                                        </select>
+                                    </div>
+                                    <div class="sort product-type">
+                                        <label>Sort By</label>
+                                        <select id="input-sort">
+                                            <option value="#" selected>Default</option>
+                                            <option value="#">Name (A - Z)</option>
+                                            <option value="#">Name (Z - A)</option>
+                                            <option value="#">Price (Low &gt; High)</option>
+                                            <option value="#">Price (High &gt; Low)</option>
+                                            <option value="#">Rating (Highest)</option>
+                                            <option value="#">Rating (Lowest)</option>
+                                            <option value="#">Model (A - Z)</option>
+                                            <option value="#">Model (Z - A)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 col-lg-3 col-md-3">
+                                    <div class="list-grid-view text-center">
+                                        <ul class="nav" role="tablist">
+                                            <li role="presentation">
+                                                <a class="active" href="#grid" aria-controls="grid"
+                                                   role="tab" data-bs-toggle="tab"><i class="zmdi zmdi-widgets"></i></a>
+                                            </li>
+                                            <li role="presentation">
+                                                <a href="#list" aria-controls="list" role="tab"
+                                                   data-bs-toggle="tab"><i class="zmdi zmdi-view-list-alt"></i></a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <div class="col-xl-3 d-lg-none d-xl-block d-none">
+                                    <div class="total-showing text-end">
+                                        Showing - <span>10</span> to <span>18</span> Of Total <span>36</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clearfix"></div>
+                    <div class="col-lg-12">
+                        <div class="shop-total-product-area clearfix mt-35">
+                            <!-- Tab panes -->
+                            @Html.Action("ProductByCategory", "ProductCategories")
+                        </div>
+                    </div>
+                </div>
+            </div> 
+            <!--main-shop-product start-->
+            <!--shop sidebar start-->
+            <div class="col-lg-3 col-md-4 order-lg-1 order-md-1 order-2">
+                <div class="shop-sidebar">
+                    <!--single aside start-->
+                    <aside class="single-aside search-aside search-box">
+                        <form action="#">
+                            <div class="input-box">
+                                <input class="single-input" placeholder="Search...." type="text">
+                                <button class="src-btn sb-2"><i class="fa fa-search"></i></button>
+                            </div>
+                        </form>
+                    </aside>
+                    <!--single aside end-->
+                    <!--single aside start-->
+                    <aside class="single-aside catagories-aside">
+                        <div class="heading-title aside-title pos-rltv">
+                            <h5 class="uppercase">Sản phẩm</h5>
+                        </div>
+                        <div id="cat-treeview" class="product-cat">
+                            <ul>
+                                @foreach (var cate in Model.productCategory)
+                                {
+                                    if (cate.Level == 0)
+                                    {
+                                        <li class="closed">
+                                            <a href="/danh-muc-san-pham/@cate.Alias-@cate.Id">@cate.Title</a>
+                                            <ul>
+                                                @foreach (var cateChild in Model.productCategory)
+                                                {
+                                                    if (cateChild.IdParent == cate.Id)
+                                                    {
+                                                        <li><a href="/danh-muc-san-pham/@cateChild.Alias-@cateChild.Id">@cateChild.Title</a></li>
+                                                    }
+                                                }
+                                            </ul>
+                                        </li>
+                                    }
+                                }
+                            </ul>
+                        </div>
+                    </aside>
+                    <!--single aside end-->
+                    <!--single aside start-->
+                    <aside class="single-aside price-aside fix">
+                        <div class="heading-title aside-title pos-rltv">
+                            <h5 class="uppercase">price</h5>
+                        </div>
+                        <div class="price_filter">
+                            <div id="slider-range"></div>
+                            <div class="price_slider_amount">
+                                <input type="text" id="amount" name="price" placeholder="Add Your Price" />
+                                <input type="submit" value="Filter" />
+                            </div>
+                        </div>
+                    </aside>
+                    <!--single aside end-->
+                    <!--single aside start-->
+                    <aside class="single-aside color-aside">
+                        <div class="heading-title aside-title pos-rltv">
+                            <h5 class="uppercase">màu</h5>
+                        </div>
+                        <ul class="color-filter mt-30">
+                            @foreach (var color in Model.color)
+                            {
+                                <li>
+                                    <div class="d-flex flex-column">
+                                        <label class="custom-checkbox col">
+                                            <input type="checkbox" name="selectedColors" value="@color.Id">
+                                            <span class="checkmark" style="background-color: #@color.Code;"></span>
+                                        </label>
+                                    </div>
+                                </li>
+                            }
+                        </ul>
+                    </aside>
+                    <!--single aside end-->
+                    <!--single aside start-->
+                    <aside class="single-aside size-aside">
+                        <div class="heading-title aside-title pos-rltv">
+                            <h5 class="uppercase">Size</h5>
+                        </div>
+                        <ul class="tag-filter mt-30">
+                            @foreach (var size in Model.size)
+                            {
+                                <li>
+                                    <label class="size-checkbox">
+                                        <input type="checkbox" name="selectedSizes" value="@size.Id">
+                                        <span class="size-mark">@size.Name</span>
+                                    </label>
+                                </li>
+                            }
+                        </ul>
+                    </aside>
+                </div>
+            </div>
+            <!--shop sidebar end-->
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('.size-option').click(function () {
+            $(this).toggleClass('active');
+            var selectedSizes = $('.size-option.active').map(function () {
+                return $(this).data('value');
+            }).get();
+        });
+        $('input[type="checkbox"]').change(function() {
+            FilterProduct();
+        });
+        $('input[type="submit"]').click(function (event) {
+            event.preventDefault();
+            var priceRange = $('#FromAmount').val();
+            console.log('Selected Price Range: ' + priceRange);
+        });
+        function FilterProduct() {
+             var selectedColors = $('input[name="selectedColors"]:checked').map(function() {
+                 return this.value;
+             }).get();
+             var selectedSizes = $('input[name="selectedSizes"]:checked').map(function() {
+                 return this.value;
+             }).get();
+             $('.shop-total-product-area').empty();
+
+             $.ajax({
+               url: '@Url.Action("ProductByCategory", "ProductCategories")',
+                 type: 'POST',
+                 data: { cateId: '', colorIds: selectedColors, sizeIds: selectedSizes },
+                 success: function (data) {
+                     console.log("ColorList: " + selectedColors);
+                     console.log("SizeList: " + selectedSizes);
+                     $('.shop-total-product-area').html(data);
+                 }
+             });
+        }
+    });
+</script>
+

@@ -1,0 +1,153 @@
+﻿
+@{
+    ViewBag.Title = "Thống kê doanh thu trong khoảng ngày";
+    Layout = "~/Areas/Admin/Views/Shared/_Layout.cshtml";
+}
+
+@section naviheader{
+    <ul class="navbar-nav">
+        <li class="nav-item d-none d-sm-inline-block">
+            <a href="~/Admin/Home" class="nav-link">Trang chủ</a>
+        </li>
+        <li class="nav-item d-none d-sm-inline-block">
+            <a href="~/Admin/Statistics" class="nav-link">@ViewBag.Title</a>
+        </li>
+    </ul>
+}
+
+
+<section class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Thống kê</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="#">Home</a></li>
+                    <li class="breadcrumb-item active"><a href="#">Thống kê</a></li>
+
+                </ol>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="content">
+    <div class="card-header">
+        <h3 class="card-title">@ViewBag.Title</h3>
+    </div>
+    <div class="card-body">
+        <div class="row d-flex">
+            <label class="">Từ</label>
+            <input type="date" id="from" class="ml-3" />
+            <label class="ml-5">Đến</label>
+            <input type="date" id="to" class="ml-3" />
+            <button type="button" id="statistics" class="btn btn-default col-2 ml-5">Thống kê</button>
+        </div>
+        <div class="row">
+            <div class="col-md-8">
+                <div class="chart">
+                    <canvas id="barChart" style="min-height: 550px; height: 250px; max-height: 75%; max-width: 100%;"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4" id="load_data"></div>
+        </div>
+    </div>
+</section>
+@section scripts{
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var today = new Date();
+            var firstDayOfThisMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            $('#statistics').click(function () {
+                console.log("Chào");
+                var f = $('#from').val();
+                var t = $('#to').val();
+                var from = (f == null || f === "") ? firstDayOfThisMonth : new Date(f);
+                var to = (t == null || t === "") ? today : new Date(t);
+                console.log(f);
+                console.log(t);
+                console.log(from);
+                console.log(to);
+                var arrDoanhThu = [];
+                var arrDate = [];
+                var strHtml = '<a href="FromToExportExcel?from=' + from.toISOString().split("T")[0] + '&to=' + to.toISOString().split("T")[0] + '">Xuất file</a><table class="table table-bordered" id="myTable"><thead><tr><th>Ngày</th><th>Doanh Thu</th></tr></thead><tbody>';
+                $.ajax({
+                    url: '/Statistics/GetFromToIncomeStatistics',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({
+                        from: from ? from.toISOString().split('T')[0] : null,
+                        to: to ? to.toISOString().split('T')[0] : null
+                    }),
+                    success: function (rs) {
+                        if (rs.error) alert(rs.error);
+                        else {
+                            $.each(rs.data, function (i, item) {
+                                arrDate.push(item.Date.toString());
+                                arrDoanhThu.push(item.TotalMoney);
+                                strHtml += "<tr>";
+                                /*strHtml += "<td>" + (i + 1) + "</td>";*/
+                                strHtml += "<td>" + item.Date.toString() + "</td>";
+                                strHtml += "<td>" + item.TotalMoney.toLocaleString() + "</td>";
+                                strHtml += "</tr>";
+                            });
+                            strHtml += '</tbody></table>';
+                            var config = {
+                                type: 'bar',
+                                data: {
+                                    labels: arrDate,
+                                    datasets: [{
+                                        label: 'Doanh thu',
+                                        data: arrDoanhThu,
+                                        borderColor: 'rgba(147, 112, 219)',
+                                        backgroundColor: 'rgb(128, 0, 128)',
+                                    }]
+                                },
+                                options: {
+                                    responsive: true,
+                                    plugins: {
+                                        legend: {
+                                            position: 'top',
+                                        },
+                                        title: {
+                                            display: true,
+                                            text: 'Doanh thu từ ' + from.getDate().toString() + '/' + (from.getMonth() + 1).toString() + '/' + from.getFullYear().toString() + ' đến ' + to.getDate().toString() + '/' + (to.getMonth() + 1).toString() + '/' + to.getFullYear().toString(),
+                                        }
+                                    },
+                                    scales: {
+                                        x: {
+                                            title: {
+                                                display: true,
+                                                text: 'Ngày'
+                                            }
+                                        },
+                                        y: {
+                                            title: {
+                                                display: true,
+                                                text: 'Doanh thu (VND)'
+                                            }
+                                        },
+                                    }
+                                },
+                            };
+                            if (window.myChart) { //myChart là biến toàn cục
+                                window.myChart.destroy();
+                            }
+                            window.myChart = new Chart(document.getElementById('barChart'), config);
+                            $('#load_data').html(strHtml);
+                        }
+
+                    },
+                    error: function (e) {
+                        console.error(e);
+                    }
+                })
+            });
+        });
+    </script>
+}
+
+

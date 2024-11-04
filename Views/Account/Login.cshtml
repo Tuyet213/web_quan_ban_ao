@@ -1,0 +1,71 @@
+﻿@using ClothesShop.Models
+@model LoginViewModel
+@{
+    ViewBag.Title = "Đăng nhập";
+}
+<style>
+    .small-checkbox {
+        transform: scale(0.4); /* Thu nhỏ checkbox xuống 75% kích thước ban đầu */
+        transform-origin: top left; /* Đặt điểm gốc của phép biến đổi */
+    }
+    a, button, input {
+        outline: medium none;
+        color: #000000;
+    }
+</style>
+<main aria-labelledby="title" class="m-5 d-flex align-items-center justify-content-center">
+    <div class="row bg-light border rounded shadow w-75">
+        <div class="col-md-8 p-5">
+            <section id="loginForm">
+                @using (Html.BeginForm("Login", "Account", new { ReturnUrl = ViewBag.ReturnUrl }, FormMethod.Post, new { role = "form" }))
+                {
+                    @Html.AntiForgeryToken()
+                    
+                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+                    <div class="row m-1">
+                        @Html.LabelFor(m => m.UserName, new { @class = "col-md-4 col-form-label" })
+                        <div class="col-md-8">
+                            @Html.TextBoxFor(m => m.UserName, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.UserName, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+                    <div class="row m-1">
+                        @Html.LabelFor(m => m.Password, new { @class = "col-md-4 col-form-label" })
+                        <div class="col-md-8">
+                            @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
+                            @Html.ValidationMessageFor(m => m.Password, "", new { @class = "text-danger" })
+                        </div>
+                    </div>
+                    <div class="row">
+                        @Html.CheckBoxFor(m => m.RememberMe, new {@class = "offset-md-4 col-md-1  small-checkbox" })
+                        @Html.LabelFor(m => m.RememberMe, new { @class = "col-md-4 ", @style = "font-size: 14px;" })
+                    </div>
+                    <div class="row m-3 ">
+                        <div class="offset-md-3 col-md-5">
+                            <input type="submit" value="Đăng nhập" class="btn btn-outline-dark" />
+                        </div>
+                    </div>
+                    <div class="row ">
+                        <div class="col-md-9">@Html.ActionLink("Đăng ký", "Register")</div>
+                        
+                        <div class="col-md-3">@Html.ActionLink("Quên mật khẩu", "ForgotPassword")</div>
+                    </div>
+                    
+                    @* Enable this once you have account confirmation enabled for password reset functionality
+            <p>
+                @Html.ActionLink("Forgot your password?", "ForgotPassword")
+            </p>*@
+                }
+            </section>
+        </div>
+        <div class="col-md-4">
+            <section class="p-2 d-flex">
+                @Html.Partial("_ExternalLoginsListPartial", new ExternalLoginListViewModel { ReturnUrl = ViewBag.ReturnUrl })
+            </section>
+        </div>
+    </div>
+</main>
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}

@@ -1,0 +1,36 @@
+﻿@model ClothesShop.Models.EF.News
+
+@{
+    ViewBag.Title = "Detail";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="single-blog-body container  ">
+    <div class="single-blog sb-2 mb-30">
+        <div class="blog-img pos-rltv product-overlay">
+            <a href="#"><img src="images/blog/about.jpg" alt=""></a>
+        </div>
+        <div class="blog-content">
+            <div class="blog-title">
+                <h5 class="uppercase font-bold">New fashion collection 2022</h5>
+                <div class="like-comments-date">
+                    <ul>
+                        <li>
+                            <a href="#"><i class="zmdi zmdi-favorite-outline"></i>13 Like</a>
+                        </li>
+                        <li>
+                            <a href="#"><i class="zmdi zmdi-comment-outline"></i>03 Comments</a>
+                        </li>
+                        <li class="blog-date"><a href="#"><i class="zmdi zmdi-calendar-alt"></i>16 jun 2022</a></li>
+                    </ul>
+                </div>
+                <div class="blog-text">
+                    @Html.Raw(Model.Detail)
+                </div>
+            </div>
+            
+            
+        </div>
+    </div>
+</div>
+

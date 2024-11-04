@@ -1,0 +1,107 @@
+﻿@model IEnumerable<ClothesShop.Models.EF.Product>
+
+@for(int i = 0; i < ViewBag.CategoryTitles.Count; i++)
+{
+    var cateTilte = ViewBag.CategoryTitles[i];
+    var cateId = ViewBag.CategoryIds[i];
+    <div class="new-arrival-area pt-70">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <div class="heading-title heading-style pos-rltv mb-50">
+                        <h3 class="uppercase">@cateTilte</h3>
+                    </div>
+                    <div class="total-new-arrival new-arrival-slider-active carsoule-btn row">
+                        @foreach (var item in Model)
+                        {
+                            if (item.ProductCategory.IdParent == cateId)
+                            {
+                                <div class="product-item" >
+                                    <!-- single product start-->
+                                    <div class="single-product d-flex flex-column">
+                                        <div class="product-img">
+                                            <div class="product-label">
+                                                <div class="new">New</div>
+                                            </div>
+                                            <div class="single-prodcut-img  product-overlay pos-rltv">
+                                                <a href="/san-pham/@item.Alias-p@{@item.Id}" id="img_list-@item.Id">
+                                                    @foreach (var variant in item.ProductVariants)
+                                                    {
+                                                        <img id="image-@item.Id-@variant.Id" src="@variant.ImageLists.FirstOrDefault().ImageUrl" width="100" class="product-image @(variant.IsDefault ? "" : "d-none")" />
+                                                    }
+                                                </a>
+                                            </div>
+
+                                            <div class="color-variants d-flex justify-content-center mt-2">
+                                                @foreach (var variant in item.ProductVariants)
+                                                {
+
+                                                    <button class="color-variant @(variant.IsDefault? "selected" : "") " 
+                                                            id = "btn-@item.Id-@variant.Id"
+                                                            data-product-id = "@item.Id"
+                                                            data-variant-id = "@variant.Id"
+                                                            data-image-url = "@variant.ImageLists.FirstOrDefault().ImageUrl"
+                                                            style = "background-color:#@variant.Color.Code; width: 20px; height: 20px; border-radius: 50%; border: 1px solid #ddd; margin: 0 5px;" >
+                                                    </button>
+                                                }
+                                            </div>
+
+                                            <div class="product-icon socile-icon-tooltip text-center">
+                                                <ul>
+                                                    <li>
+                                                        <a href="#" data-tooltip="Add To Cart" class="add-cart"
+                                                           data-placement="left"><i class="fa fa-cart-plus"></i></a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" data-tooltip="Wishlist" class="w-list">
+                                                            <i class="fa fa-heart-o"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" data-tooltip="Compare" class="cpare">
+                                                            <i class="fa fa-refresh"></i>
+                                                        </a>
+                                                    </li>
+                                                    <li>
+                                                        <a href="#" data-tooltip="Quick View" class="q-view"
+                                                           data-bs-toggle="modal" data-bs-target=".modal">
+                                                            <i class="fa fa-eye"></i>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="product-text d-flex flex-column justify-content-between" style="height: 150px;">
+                                            <div class="prodcut-name">
+                                                <a href="/san-pham/@item.Alias-p@{@item.Id}">@item.Title</a>
+                                            </div>
+                                            @if (item.IsSale)
+                                                {
+                                                <div class="prodcut-price d-flex flex-column text-end">
+                                                    <div class="old-price">@Common.FormatNumber(item.Price)</div>
+                                                    <div class="new-price">@Common.FormatNumber(item.PriceSale)</div>
+                                                </div>
+                                            }else
+                                            { 
+                                                <div class="prodcut-price text-end">
+                                                    <div class="new-price">@Common.FormatNumber(item.Price)</div>
+                                                </div>
+                                            }
+
+                                        </div>
+                                    </div>
+                                    <!-- single product end-->
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<script src="~/Content/ShopPage/js/main.js"></script>
+<script>
+
+</script>

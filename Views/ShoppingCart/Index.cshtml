@@ -1,0 +1,383 @@
+﻿@model IEnumerable<ClothesShop.Models.EF.CartDetail>
+@{
+    ViewBag.Title = "Giỏ hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+
+
+
+}
+<style>
+    .shopee-popup {
+        bottom: 0;
+        left: 0;
+        position: fixed;
+        right: 0;
+        top: 0;
+        z-index: 600;
+        display: none; /* Thêm này để ẩn modal khi không sử dụng */
+    }
+
+    .shopee-popup__overlay {
+        background-color: rgba(0, 0, 0, 0.5);
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+    }
+
+    .shopee-popup__container {
+        left: 50%;
+        max-height: 100%;
+        max-width: 90%; /* Giới hạn chiều rộng của modal */
+        overflow: visible;
+        position: absolute;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+
+    .shopee-alert-popup {
+        background-color: #fff;
+        padding: 20px; /* Thêm padding cho đẹp */
+        border-radius: 8px; /* Bo góc */
+        box-shadow: 0 5px 15px rgba(0,0,0,0.5); /* Thêm bóng đổ */
+    }
+
+    .shopee-alert-popup__message {
+        font-size: 1rem;
+        margin-top: 2.5rem;
+    }
+
+    .shopee-alert-popup__button-horizontal-layout {
+        display: flex;
+        margin-top: 6.25rem;
+    }
+
+        .shopee-alert-popup__button-horizontal-layout .shopee-button-outline, .shopee-alert-popup__button-horizontal-layout .shopee-button-solid {
+            flex: 1;
+            padding: 0.75rem 0;
+            text-transform: capitalize;
+        }
+
+    .shopee-button-solid--primary {
+        background: rgb(238, 77, 45);
+        outline: 0px;
+        overflow: visible;
+        position: relative;
+    }
+
+    .shopee-button-solid {
+        align-items: center;
+        background: rgba(0, 0, 0, 0.54);
+        border: 0px;
+        border-radius: 2px;
+        box-shadow: rgba(0, 0, 0, 0.09) 0px 1px 1px 0px;
+        color: rgb(255, 255, 255);
+        cursor: pointer;
+        display: flex;
+        font-size: 0.875rem;
+        font-weight: 300;
+        justify-content: center;
+        letter-spacing: 0px;
+        line-height: 1;
+        outline: none;
+        position: relative;
+        transition: opacity 0.2s ease 0s;
+        user-select: none;
+    }
+</style>
+<div class="wrapper cart">
+
+
+    <!--cart-checkout-area start -->
+    @{
+        <div class="cart-checkout-area  pt-30">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="product-area">
+                            <div class="title-tab-product-category row">
+                                <div class="col-lg-12 text-center pb-60">
+
+                                </div>
+                            </div>
+                            <div class="clearfix"></div>
+                            <div class="content-tab-product-category pb-70">
+                                <!-- Tab panes -->
+                                <div class="tab-content">
+                                    <div role="tabpanel" class="tab-pane fade show active" id="cart">
+                                        <!-- cart are start-->
+                                        <div class="cart-page-area">
+                                            <form method="post" action="#">
+                                                <div class="table-responsive mb-20">
+                                                    <table class="shop_table-2 cart table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>
+                                                                    <input type="checkbox" style="width:15px" id="selectAll" @(ViewBag.selectAll ? "checked" : "") />
+                                                                </th>
+                                                                <th class="product-thumbnail "></th>
+                                                                <th class="product-name">Tên sản phẩm</th>
+                                                                <th class="" style="width:150px;">Size</th>
+                                                                <th class="product-price ">Giá mua</th>
+                                                                <th class="product-quantity">Số lượng</th>
+                                                                <th class="product-subtotal ">Tổng tiền</th>
+                                                                <th class="product-remove">Thao tác</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @if (Model != null)
+                                                            {
+
+                                                                foreach (var p in Model)
+                                                                {
+                                                                    var imgUrl = p.VariantSize.ProductVariant.ImageLists.FirstOrDefault(x => x.IsDefault).ImageUrl;
+                                                                    var money = (p.VariantSize.ProductVariant.Product.IsSale)? p.Quantity * p.VariantSize.ProductVariant.Product.PriceSale: p.Quantity * p.VariantSize.ProductVariant.Product.Price;
+                                                                    var product = p.VariantSize.ProductVariant.Product;
+                                                                    var variant = p.VariantSize.ProductVariant;
+                                                                    <tr class="cart_item" id="trow_@p.Id">
+                                                                        <td>
+                                                                            <input type="checkbox" data-id="@p.Id" class="select" @(p.Selected ? "checked" : "") />
+                                                                        </td>
+                                                                        <td class="item-img">
+                                                                            <a href="/san-pham/@product.Alias-p@{@product.Id}">
+                                                                                <img src="@imgUrl"
+                                                                                     alt="">
+                                                                            </a>
+                                                                        </td>
+                                                                        <td class="item-title">
+                                                                            <a href="/san-pham/@product.Alias-p@{@product.Id}">
+                                                                                @product.Title - @variant.Color.Name
+                                                                            </a>
+                                                                        </td>
+                                                                        <td style="width: 100px;" class="m-1">@p.VariantSize.Size.Name</td>
+
+                                                                        <td class="item-price">
+                                                                            @if (product.IsSale)
+                                                                            {
+                                                                                <p style="text-decoration: line-through;">@Common.FormatNumber(product.Price)</p>
+                                                                                <p>@Common.FormatNumber(product.PriceSale)</p>
+                                                                            }
+                                                                            else
+                                                                            {
+                                                                                <p>@Common.FormatNumber(product.Price)</p>
+                                                                            }
+                                                                        </td>
+
+                                                                        <td class="item-qty">
+                                                                            <div class="cart-quantity">
+                                                                                <div class="product-qty">
+                                                                                    <div class="cart-quantity">
+                                                                                        <div class="cart-plus-minus">
+                                                                                            @*button ko cho biết type thì mặc định là submit*@
+
+                                                                                            <button type="button" class="dec qtybutton" data-id="@p.Id" @(p.Quantity <= 1 ? "disabled" : "") >-</button>
+                                                                                            <input value="@p.Quantity"
+                                                                                                   name="qtybutton"
+                                                                                                   class="cart-plus-minus-box "
+                                                                                                   type="text"
+                                                                                                   id="qtyInput_@p.Id"
+                                                                                                   data-id="@p.Id">
+                                                                                            <button type="button" class="inc qtybutton" data-id="@p.Id" @(p.Quantity >= p.VariantSize.Amount ? "disabled" : "")>+</button>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td class="total-price" id="money_@p.Id">
+                                                                            <strong id="money_@p.Id">@Common.FormatNumber(money)</strong>
+                                                                        </td>
+                                                                        <td class="remove-item">
+                                                                            <a href="#" data-id="@p.Id" class="btn btn-sm  btnDelete">
+                                                                                <i class="fa fa-trash-o"></i>
+                                                                            </a>
+                                                                        </td>
+                                                                    </tr>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <p></p>
+                                                            }
+
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+
+                                                <div class="cart-bottom-area">
+                                                    <div class="row">
+                                                        <div class="col-lg-8 col-md-7">
+                                                            <div class="update-coupne-area">
+                                                                <div class="update-continue-btn text-end pb-20">
+
+                                                                    <a href="#" class="btn-def btn2">
+                                                                        Continue
+                                                                        Shopping
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-lg-4 col-md-5">
+                                                            <div class="cart-total-area">
+                                                                <div class="sub-shipping" id="totalMoney">
+                                                                    <p>Tổng tiền: <span>@Common.FormatNumber((int)(ViewBag.totalMoney))</span></p>
+                                                                </div>
+                                                                <div class="process-checkout-btn text-end">
+                                                                    <a class="btn-def " id="btnGoToCheckOut" href="#">
+                                                                        Mua hàng
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        <!-- cart are end-->
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    <!--cart-checkout-area end-->
+
+</div>
+<div id="modal" class="shopee-popup">
+    <div class="shopee-popup__overlay"></div>
+    <div class="shopee-popup__container">
+        <div class="shopee-alert-popup card">
+            <div class="shopee-alert-popup__message">Bạn vẫn chưa chọn sản phẩm nào để mua.</div>
+            <div class="shopee-alert-popup__button-horizontal-layout">
+                <button class="shopee-button-solid shopee-button-solid--primary" id="OK1">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+@section scripts{
+    <script>
+        $(document).ready(function () {
+
+            $('.btnDelete').off('click').on('click', function (e) {
+                e.preventDefault();
+                var id = $(this).data("id");
+                var conf = confirm('Bạn có muốn xóa sản phẩm này không?');
+                if (conf === true) {
+                    $.ajax({
+                        url: '/ShoppingCart/delete',
+                        type: 'POST',
+                        data: { id: id },
+                        success: function (rs) {
+                            if (rs.Success) {
+                                $('#trow_' + id).remove();
+                                var totalMoney = '<p>Tổng tiền <span>' + rs.totalMoney + '</span></p>';
+                                $('#totalMoney').html(totalMoney);
+                            }
+                        }
+                    });
+                }
+            });
+
+            $('body').on('click', '.qtybutton', function () {
+                var id = $(this).data("id");
+                var input = $('#qtyInput_' + id);
+                var quantity = parseInt(input.val());
+                console.log(quantity);
+
+                $.ajax({
+                    url: '/ShoppingCart/UpdateQuantity',
+                    type: 'POST',
+                    data: { id: id, quantity: quantity },
+                    success: function (rs) {
+                        if (rs.Success) {
+                            console.log(rs.amount);
+                            if (quantity <= 1) {
+                                $('.dec[data-id="' + id + '"]').prop('disabled', true);
+                            } else {
+                                $('.dec[data-id="' + id + '"]').prop('disabled', false);
+                            }
+                            if (quantity >= rs.amount) {
+                                $('.inc[data-id="' + id + '"]').prop('disabled', true);
+                            } else {
+                                $('.inc[data-id="' + id + '"]').prop('disabled', false);
+                            }
+                            var money = '<strong id="money_' + id + '">' + rs.money + '</strong>';
+                            $('#money_' + id).html(money);
+                            var totalMoney = '<p>Tổng tiền <span>' + rs.totalMoney + '</span></p>';
+                            $('#totalMoney').html(totalMoney);
+                        }
+                    }
+                });
+            });
+            $('body').on('click', '#selectAll', function () {
+                var checkbox = document.getElementById('selectAll');
+                var selectAll = checkbox.checked ? true : false;
+                var checkboxes = document.querySelectorAll('.select');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAll;
+                });
+
+                $.ajax({
+                    url: '/ShoppingCart/UpdateSelectAll',
+                    type: 'POST',
+                    data: { selectAll: selectAll },
+                    success: function (rs) {
+                        if (rs.Success) {
+
+                            var totalMoney = '<p>Tổng tiền <span>' + rs.totalMoney + '</span></p>';
+                            $('#totalMoney').html(totalMoney);
+                        }
+                    }
+                });
+            });
+            $('body').on('click', '.select', function () {
+                var checkboxAll = $('#selectAll');
+                var selected = $(this).is(':checked');
+
+                if (!selected) {
+                    checkboxAll.prop('checked', false);
+                } else {
+                    var allSelected = $('.select').length === $('.select:checked').length;
+                    checkboxAll.prop('checked', allSelected);
+                }
+
+                var id = $(this).data("id");
+                $.ajax({
+                    url: '/ShoppingCart/UpdateSelect',
+                    type: 'POST',
+                    data: { id: id, selected: selected },
+                    success: function (rs) {
+                        if (rs.Success) {
+                            var totalMoney = '<p>Tổng tiền <span>' + rs.totalMoney + '</span></p>';
+                            $('#totalMoney').html(totalMoney);
+                        }
+                    }
+                });
+            });
+
+            $('#OK1').click(function () {
+                $('#modal').hide();
+            });
+            $('#btnGoToCheckOut').click(function (e) {
+                e.preventDefault();
+                $.ajax({
+                    url: '/ShoppingCart/GoToCheckOut',
+                    type: 'GET',
+                    success: function (response) {
+                        if (response.HasSelectedItems) {
+                            window.location.href = '/ShoppingCart/CheckOut';
+                        } else {
+                            $('#modal').show();
+                        }
+                    }
+                });
+            });
+
+        });
+    </script>
+}
